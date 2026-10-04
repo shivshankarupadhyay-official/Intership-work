@@ -1,259 +1,210 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <meta name="description"
-          content="Shiv S Upadhyay - personal portfolio website.">
-
-    <title>Shiv S Upadhyay | Portfolio</title>
-
-    <link rel="stylesheet" href="css/style.css">
-    <script src="js/script.js" defer></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weather Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg1:#1d3557; --bg2:#457b9d; --ink:#f1faee; --panel:rgba(255,255,255,.12); --line:rgba(255,255,255,.22); }
+  body[data-sky="clear"]  { --bg1:#1e6091; --bg2:#f4a259; }
+  body[data-sky="cloud"]  { --bg1:#2b3a4a; --bg2:#7d8ea0; }
+  body[data-sky="rain"]   { --bg1:#14213d; --bg2:#3d5a80; }
+  body[data-sky="snow"]   { --bg1:#4a6073; --bg2:#c9d6df; }
+  body[data-sky="storm"]  { --bg1:#10151f; --bg2:#4b3f72; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; font-family:"Manrope",system-ui,sans-serif; color:var(--ink);
+    background:linear-gradient(160deg,var(--bg1),var(--bg2)); transition:background .6s; padding:24px 16px 48px; }
+  main { max-width:760px; margin:0 auto; }
+  h1 { font-size:1.25rem; font-weight:800; margin:0 0 16px; }
+  .bar { display:flex; gap:8px; flex-wrap:wrap; }
+  input, button, select { font:inherit; border-radius:10px; border:1px solid var(--line); padding:12px 14px; }
+  input { flex:1 1 220px; background:var(--panel); color:var(--ink); }
+  input::placeholder { color:rgba(241,250,238,.65); }
+  button { background:var(--ink); color:var(--bg1); font-weight:600; cursor:pointer; }
+  select { background:var(--panel); color:var(--ink); }
+  select option { color:#111; }
+  :focus-visible { outline:3px solid #fff; outline-offset:2px; }
+  #status { min-height:1.5em; margin:14px 2px; }
+  #status.error { background:#ffe5e5; color:#7a1020; padding:10px 14px; border-radius:10px; font-weight:600; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:22px; backdrop-filter:blur(6px); }
+  .now { display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+  .place { font-size:1.5rem; font-weight:800; margin:0; }
+  .cond { margin:4px 0 0; opacity:.9; }
+  .temp { font-size:4.5rem; font-weight:800; line-height:1; margin:0; }
+  .icon { font-size:3.5rem; }
+  .metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-top:20px; }
+  .metric { border-top:1px solid var(--line); padding-top:10px; }
+  .metric span { display:block; font-size:.85rem; opacity:.8; }
+  .metric strong { font-size:1.35rem; }
+  h2 { font-size:1rem; margin:26px 0 10px; }
+  .days { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:10px; }
+  .day { text-align:center; padding:14px 8px; }
+  .day .d { font-weight:600; } .day .i { font-size:1.8rem; margin:6px 0; } .day .t { font-size:.9rem; }
+  [hidden] { display:none; }
+  @media (prefers-reduced-motion: reduce) { body { transition:none; } }
+</style>
 </head>
-
-<body>
-
-<a class="skip-link" href="#main-content">
-    Skip to main content
-</a>
-
-<header class="site-header">
-    <div class="container nav-wrap">
-
-        <a class="brand" href="index.html"
-           aria-label="Shiv S Upadhyay home">
-            Shiv<span>.</span>
-        </a>
-
-        <button class="menu-toggle"
-                type="button"
-                aria-expanded="false"
-                aria-controls="site-nav">
-            Menu
-        </button>
-
-        <nav id="site-nav"
-             class="site-nav"
-             aria-label="Primary navigation">
-
-            <a class="active" href="index.html" aria-current="page">
-                Home
-            </a>
-
-            <a href="about.html">About</a>
-            <a href="projects.html">Projects</a>
-            <a href="skills.html">Skills</a>
-            <a href="experience.html">Experience</a>
-            <a href="contact.html">Contact</a>
-
-        </nav>
-
+<body data-sky="clear">
+<main>
+  <h1>Weather Dashboard</h1>
+  <form class="bar" id="search">
+    <input id="city" type="text" placeholder="Search a city, e.g. Kolkata" aria-label="City name" autocomplete="off">
+    <select id="units" aria-label="Units">
+      <option value="metric">°C, km/h</option>
+      <option value="imperial">°F, mph</option>
+    </select>
+    <button type="submit">Search</button>
+  </form>
+  <div id="status" role="status" aria-live="polite"></div>
+ 
+  <section id="result" hidden>
+    <div class="card">
+      <div class="now">
+        <div>
+          <p class="place" id="place"></p>
+          <p class="cond" id="cond"></p>
+        </div>
+        <div class="icon" id="icon" aria-hidden="true"></div>
+        <p class="temp" id="temp"></p>
+      </div>
+      <div class="metrics">
+        <div class="metric"><span>Feels like</span><strong id="feels"></strong></div>
+        <div class="metric"><span>Humidity</span><strong id="humidity"></strong></div>
+        <div class="metric"><span>Wind speed</span><strong id="wind"></strong></div>
+      </div>
     </div>
-</header>
-
-
-<main id="main-content">
-
-    <!-- HERO -->
-
-    <section class="hero section">
-
-        <div class="container hero-grid">
-
-            <div>
-
-                <p class="eyebrow">
-                    Student • Developer • Learner
-                </p>
-
-                <h1>
-                    Building clean, accessible experiences for the web.
-                </h1>
-
-                <p class="lead">
-                    I'm Shiv S Upadhyay, a motivated student developing
-                    practical skills in web development and modern
-                    digital experiences.
-                </p>
-
-                <div class="actions">
-
-                    <a class="button" href="projects.html">
-                        View My Projects
-                    </a>
-
-                    <a class="button button-secondary"
-                       href="contact.html">
-                        Let's Connect
-                    </a>
-
-                </div>
-
-            </div>
-
-
-            <aside class="hero-card"
-                   aria-label="Portfolio highlights">
-
-                <div class="avatar" aria-hidden="true">
-                    SS
-                </div>
-
-                <h2>
-                    Focused on growth
-                </h2>
-
-                <p>
-                    Learning by building, improving, and applying
-                    real-world development practices.
-                </p>
-
-                <ul class="check-list">
-
-                    <li>Semantic HTML5</li>
-                    <li>Responsive CSS</li>
-                    <li>JavaScript fundamentals</li>
-                    <li>Accessibility-first thinking</li>
-
-                </ul>
-
-            </aside>
-
-        </div>
-
-    </section>
-
-
-    <!-- FEATURES -->
-
-    <section class="section section-muted"
-             aria-labelledby="focus-title">
-
-        <div class="container">
-
-            <div class="section-heading">
-
-                <p class="eyebrow">
-                    What I Bring
-                </p>
-
-                <h2 id="focus-title">
-                    A practical approach to development
-                </h2>
-
-            </div>
-
-
-            <div class="cards three">
-
-                <article class="card">
-
-                    <span class="icon" aria-hidden="true">
-                        01
-                    </span>
-
-                    <h3>
-                        Clean Structure
-                    </h3>
-
-                    <p>
-                        Semantic, organized markup designed to remain
-                        understandable and maintainable.
-                    </p>
-
-                </article>
-
-
-                <article class="card">
-
-                    <span class="icon" aria-hidden="true">
-                        02
-                    </span>
-
-                    <h3>
-                        Responsive Design
-                    </h3>
-
-                    <p>
-                        Interfaces that adapt thoughtfully across
-                        phones, tablets, and desktop screens.
-                    </p>
-
-                </article>
-
-
-                <article class="card">
-
-                    <span class="icon" aria-hidden="true">
-                        03
-                    </span>
-
-                    <h3>
-                        Continuous Learning
-                    </h3>
-
-                    <p>
-                        Curious, consistent improvement through
-                        projects, feedback, and hands-on practice.
-                    </p>
-
-                </article>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- CTA -->
-
-    <section class="section">
-
-        <div class="container cta">
-
-            <div>
-
-                <p class="eyebrow">
-                    Have a project in mind?
-                </p>
-
-                <h2>
-                    Let's build something useful.
-                </h2>
-
-            </div>
-
-            <a class="button" href="contact.html">
-                Contact Me
-            </a>
-
-        </div>
-
-    </section>
-
+    <h2>Next 5 days</h2>
+    <div class="days" id="days"></div>
+  </section>
 </main>
-
-
-<footer class="site-footer">
-
-    <div class="container footer-wrap">
-
-        <p>
-            © <span id="year"></span>
-            Shiv S Upadhyay.
-            Built with semantic HTML5.
-        </p>
-
-        <a href="contact.html">
-            Contact
-        </a>
-
-    </div>
-
-</footer>
-
+ 
+<script>
+  // Open-Meteo: free public REST API, no API key needed
+  const GEO_URL = "https://geocoding-api.open-meteo.com/v1/search";
+  const WEATHER_URL = "https://api.open-meteo.com/v1/forecast";
+ 
+  // WMO weather codes -> [label, emoji, sky theme]
+  const CODES = {
+    0:["Clear sky","☀️","clear"], 1:["Mainly clear","🌤️","clear"], 2:["Partly cloudy","⛅","cloud"], 3:["Overcast","☁️","cloud"],
+    45:["Fog","🌫️","cloud"], 48:["Rime fog","🌫️","cloud"],
+    51:["Light drizzle","🌦️","rain"], 53:["Drizzle","🌦️","rain"], 55:["Dense drizzle","🌧️","rain"],
+    61:["Light rain","🌧️","rain"], 63:["Rain","🌧️","rain"], 65:["Heavy rain","🌧️","rain"],
+    71:["Light snow","🌨️","snow"], 73:["Snow","🌨️","snow"], 75:["Heavy snow","❄️","snow"], 77:["Snow grains","❄️","snow"],
+    80:["Rain showers","🌦️","rain"], 81:["Rain showers","🌧️","rain"], 82:["Violent showers","⛈️","storm"],
+    85:["Snow showers","🌨️","snow"], 86:["Heavy snow showers","❄️","snow"],
+    95:["Thunderstorm","⛈️","storm"], 96:["Thunderstorm with hail","⛈️","storm"], 99:["Thunderstorm with hail","⛈️","storm"]
+  };
+  const info = code => CODES[code] || ["Unknown","🌡️","cloud"];
+ 
+  const $ = id => document.getElementById(id);
+  const statusEl = $("status");
+ 
+  function setStatus(msg, isError = false) {
+    statusEl.textContent = msg;
+    statusEl.className = isError ? "error" : "";
+  }
+ 
+  // Fetch helper: timeout + HTTP error handling + JSON parsing
+  async function fetchJSON(url) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error("TIMEOUT")), 10000);
+    });
+    try {
+      const res = await Promise.race([fetch(url), timeout]);
+      if (!res.ok) throw new Error(`Server error (${res.status}). Please try again.`);
+      return await res.json();
+    } catch (err) {
+      if (err.message === "TIMEOUT") throw new Error("The request timed out. Check your connection and try again.");
+      if (err instanceof TypeError) throw new Error("Network error. Check your internet connection and try again.");
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+ 
+  // Step 1: city name -> coordinates
+  async function geocode(city) {
+    const data = await fetchJSON(`${GEO_URL}?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
+    if (!data.results || data.results.length === 0) {
+      throw new Error(`No city found for "${city}". Check the spelling and try again.`);
+    }
+    return data.results[0]; // { name, country, admin1, latitude, longitude }
+  }
+ 
+  // Step 2: coordinates -> weather (nested JSON: current + daily)
+  async function getWeather(lat, lon, units) {
+    const imperial = units === "imperial";
+    const params = new URLSearchParams({
+      latitude: lat, longitude: lon, timezone: "auto", forecast_days: 6,
+      current: "temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,weather_code",
+      daily: "weather_code,temperature_2m_max,temperature_2m_min",
+      temperature_unit: imperial ? "fahrenheit" : "celsius",
+      wind_speed_unit: imperial ? "mph" : "kmh"
+    });
+    return fetchJSON(`${WEATHER_URL}?${params}`);
+  }
+ 
+  function render(place, data) {
+    const cur = data.current, u = data.current_units;
+    const [label, emoji, sky] = info(cur.weather_code);
+ 
+    document.body.dataset.sky = sky;
+    $("place").textContent = [place.name, place.admin1, place.country].filter(Boolean).join(", ");
+    $("cond").textContent = label;
+    $("icon").textContent = emoji;
+    $("temp").textContent = `${Math.round(cur.temperature_2m)}${u.temperature_2m}`;
+    $("feels").textContent = `${Math.round(cur.apparent_temperature)}${u.apparent_temperature}`;
+    $("humidity").textContent = `${cur.relative_humidity_2m}${u.relative_humidity_2m}`;
+    $("wind").textContent = `${Math.round(cur.wind_speed_10m)} ${u.wind_speed_10m}`;
+ 
+    // Daily forecast: skip index 0 (today), show next 5 days
+    const d = data.daily, box = $("days");
+    box.replaceChildren();
+    for (let i = 1; i < d.time.length; i++) {
+      const [lbl, ico] = info(d.weather_code[i]);
+      const el = document.createElement("div");
+      el.className = "card day";
+      const parts = [
+        ["d", new Date(d.time[i] + "T00:00").toLocaleDateString(undefined, { weekday: "short" })],
+        ["i", ico],
+        ["t", `${Math.round(d.temperature_2m_max[i])}° / ${Math.round(d.temperature_2m_min[i])}°`]
+      ];
+      for (const [cls, text] of parts) {
+        const s = document.createElement("div");
+        s.className = cls; s.textContent = text; el.appendChild(s);
+      }
+      el.title = lbl;
+      box.appendChild(el);
+    }
+    $("result").hidden = false;
+  }
+ 
+  async function search(city) {
+    city = city.trim();
+    if (!city) { setStatus("Enter a city name to search.", true); return; }
+    setStatus("Loading weather…");
+    try {
+      const place = await geocode(city);
+      const data = await getWeather(place.latitude, place.longitude, $("units").value);
+      render(place, data);
+      setStatus("");
+      try { localStorage.setItem("lastCity", city); } catch {}
+    } catch (err) {
+      $("result").hidden = true;
+      setStatus(err.message, true);
+    }
+  }
+ 
+  $("search").addEventListener("submit", e => { e.preventDefault(); search($("city").value); });
+  $("units").addEventListener("change", () => { if ($("city").value.trim()) search($("city").value); });
+ 
+  // Load last searched city (or a default) on start
+  let start = "Kolkata";
+  try { start = localStorage.getItem("lastCity") || start; } catch {}
+  $("city").value = start;
+  search(start);
+</script>
 </body>
 </html>
